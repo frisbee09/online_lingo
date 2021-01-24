@@ -7,10 +7,6 @@
     "jsx": "react",
     "strict": true,
     "alwaysStrict": true,
-    "baseUrl": ".",
-    "paths": {
-      "@": ["*"]
-    }
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]

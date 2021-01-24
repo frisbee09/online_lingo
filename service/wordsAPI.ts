@@ -24,6 +24,7 @@ const getNewWord = async (
     letters: numberOfLetters.toString(),
     letterPattern: `^[a-z]{${numberOfLetters}}$`,
     frequencyMin: difficulty.toString(),
+    hasDetails: "definitions",
     random: "true",
   });
   const resp: WordResponse = await wordsFetch(

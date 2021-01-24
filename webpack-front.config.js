@@ -2,6 +2,7 @@ const webpack = require("webpack");
 const { merge } = require("webpack-merge");
 const path = require("path");
 
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { WebpackPluginServe: Serve } = require("webpack-plugin-serve");
 const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
@@ -16,10 +17,11 @@ const devConfig = require("./webpack.dev.config");
  *
  * Hence, we have a webserver for each
  */
-module.exports = merge(common, devConfig, {
+module.exports = merge(common, {
+  mode: "development",
   entry: ["./client/index.tsx", "webpack-plugin-serve/client"],
   output: {
-    path: path.resolve("./dist/public"),
+    path: path.resolve("./dist/dev"),
     publicPath: "/",
     filename: "[name].bundle.js",
   },
@@ -40,11 +42,14 @@ module.exports = merge(common, devConfig, {
     ],
   },
   plugins: [
+    new CleanWebpackPlugin({
+      cleanAfterEveryBuildPatterns: ["!index.html"],
+    }),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, "client", "index.html"),
     }),
     new Serve({
-      host: "127.0.0.1",
+      host: "0.0.0.0",
       port: 8080,
       compress: true,
       historyFallback: {
@@ -61,11 +66,8 @@ module.exports = merge(common, devConfig, {
           },
         ],
       },
-      open: {
-        url: "http://localhost:8080",
-      },
       static: [
-        path.join(__dirname, "dist", "public"),
+        path.join(__dirname, "dist", "dev"),
         path.join(__dirname, "client", "content"),
       ],
     }),

@@ -22,7 +22,10 @@ const sharedConfig = merge(common, {
 const serverConfig = merge(sharedConfig, {
   target: "node",
   entry: { server: "./server/index.ts" },
-  externals: [nodeExternals()],
+  output: {
+    path: path.join(__dirname, "dist", "server"),
+  },
+  // externals: [nodeExternals()],
   plugins: [new CleanWebpackPlugin()],
   node: {
     __dirname: false,
