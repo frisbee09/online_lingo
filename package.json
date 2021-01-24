@@ -4,6 +4,7 @@
     "dev-back": "wp --config webpack-back.config.js",
     "dev-front": "wp --config webpack-front.config.js",
     "build": "wp --config webpack-deploy.config.js",
+    "deploy": "npx surge ./dist/public online-lingo.surge.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

@@ -17,6 +17,8 @@ const createStarterGuess = (word: string): Guess => ({
   })),
 });
 
+const TIME_LIMIT_IN_S = 15;
+
 /**
  * Takes a guess and creates a Guess state object against the word
  * @param guess
@@ -79,7 +81,7 @@ const App: React.FunctionComponent<IAppProps> = () => {
   const hasFailed = !isRight && (isOutOfTime || guessState.length === 5);
 
   // Clearing up at the end of the game
-  if (isOutOfTime || hasFailed) {
+  if (isRight || isOutOfTime || hasFailed) {
     intervalId.current && clearTimeout(intervalId.current);
     intervalId.current = null;
   }
@@ -91,7 +93,7 @@ const App: React.FunctionComponent<IAppProps> = () => {
       parseGuess((guessOverride || guessInput).slice(0, word.length), word),
     ]);
     setGuessInput("");
-    setOOT(new Date(Date.now() + 15 * 1000));
+    setOOT(new Date(Date.now() + TIME_LIMIT_IN_S * 1000));
 
     intervalId.current = setInterval(() => {
       updateTime(new Date());
@@ -137,9 +139,11 @@ const App: React.FunctionComponent<IAppProps> = () => {
         <>
           <TimerBar
             timeLeft={
-              timeLimit ? timeLimit.getTime() - timeNow.getTime() : 10 * 1000
+              timeLimit
+                ? timeLimit.getTime() - timeNow.getTime()
+                : TIME_LIMIT_IN_S * 1000
             }
-            totalTime={10 * 1000}
+            totalTime={TIME_LIMIT_IN_S * 1000}
           />
           <input
             ref={inputRef}

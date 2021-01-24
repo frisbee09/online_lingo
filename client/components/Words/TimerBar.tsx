@@ -28,6 +28,7 @@ const Progress = styled(
 })`
   height: 10px;
   width: 100%;
+  max-width: 300px;
 `;
 
 interface ITimerBarProps {
