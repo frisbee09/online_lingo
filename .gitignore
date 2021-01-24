@@ -102,3 +102,6 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Where I'm putting credentials for now
+*.secret-key.ts

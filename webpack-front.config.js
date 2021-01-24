@@ -1,8 +1,10 @@
 const webpack = require("webpack");
-const merge = require("webpack-merge");
+const { merge } = require("webpack-merge");
 const path = require("path");
 
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const { WebpackPluginServe: Serve } = require("webpack-plugin-serve");
+const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
 
 const common = require("./webpack.common");
 const devConfig = require("./webpack.dev.config");
@@ -15,19 +17,25 @@ const devConfig = require("./webpack.dev.config");
  * Hence, we have a webserver for each
  */
 module.exports = merge(common, devConfig, {
-  entry: ["react-hot-loader/patch", "./client/index.tsx"],
+  entry: ["./client/index.tsx", "webpack-plugin-serve/client"],
   output: {
-    filename: "[name].bundle.js",
-    path: path.resolve("./dist"),
+    path: path.resolve("./dist/public"),
     publicPath: "/",
-    filename: "client.js",
+    filename: "[name].bundle.js",
   },
   module: {
     rules: [
       {
         test: /\.(t|j)sx?$/,
-        include: /node_modules/,
-        use: ["react-hot-loader/webpack"],
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: "babel-loader",
+            options: {
+              plugins: ["react-refresh/babel"],
+            },
+          },
+        ],
       },
     ],
   },
@@ -35,19 +43,50 @@ module.exports = merge(common, devConfig, {
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, "client", "index.html"),
     }),
-    new webpack.HotModuleReplacementPlugin(),
+    new Serve({
+      host: "127.0.0.1",
+      port: 8080,
+      compress: true,
+      historyFallback: {
+        disableDotRule: true,
+        verbose: true,
+        rewrites: [
+          {
+            from: "/wps/",
+            to: (context) => context.parsedUrl.pathname,
+          },
+          {
+            from: /.js/,
+            to: (context) => context.parsedUrl.pathname,
+          },
+        ],
+      },
+      open: {
+        url: "http://localhost:8080",
+      },
+      static: [
+        path.join(__dirname, "dist", "public"),
+        path.join(__dirname, "client", "content"),
+      ],
+    }),
+    new ReactRefreshWebpackPlugin({
+      overlay: {
+        sockIntegration: "wps",
+      },
+    }),
   ],
-  devServer: {
-    contentBase: path.resolve(__dirname, "client", "content"),
-    historyApiFallback: true,
-    host: "0.0.0.0",
-    public: "http://localhost:8080",
-    hot: true,
-    open: true,
-    openPage: "",
-    proxy: {
-      "*": "http://[::1]:3000",
-    },
-  },
+  watch: true,
+  // devServer: {
+  //   contentBase: path.resolve(__dirname, "client", "content"),
+  //   historyApiFallback: true,
+  //   host: "0.0.0.0",
+  //   public: "http://localhost:8080",
+  //   hot: true,
+  //   open: true,
+  //   openPage: "",
+  //   proxy: {
+  //     "*": "http://[::1]:3000",
+  //   },
+  // },
   devtool: "source-map",
 });
