@@ -91,7 +91,7 @@ const App: React.FunctionComponent<IAppProps> = () => {
       parseGuess((guessOverride || guessInput).slice(0, word.length), word),
     ]);
     setGuessInput("");
-    setOOT(new Date(Date.now() + 10 * 1000));
+    setOOT(new Date(Date.now() + 15 * 1000));
 
     intervalId.current = setInterval(() => {
       updateTime(new Date());
