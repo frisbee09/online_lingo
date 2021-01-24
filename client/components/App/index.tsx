@@ -116,7 +116,7 @@ const App: React.FunctionComponent<IAppProps> = () => {
       <div style={{ display: "flex", flexDirection: "column" }}>
         <Word {...createStarterGuess(word)} />
         {guessState.map((gs, idx) => (
-          <Word key={`${gs.word}${idx}`} {...gs} fail={idx === 4} />
+          <Word key={`${gs.word}${idx}`} {...gs} fail={!isRight && idx === 4} />
         ))}
         {isOutOfTime && <Word {...parseGuess(emptyGuess, word)} fail={true} />}
         {hasFailed && <Word {...parseGuess(word, word)} />}
