@@ -21,11 +21,13 @@ const TIME_LIMIT_IN_S = 15;
 
 /**
  * Takes a guess and creates a Guess state object against the word
- * @param guess
+ * @param processedGuess
  * @param word
  */
 const parseGuess = (guess: string, word: string): Guess => {
-  guess = guess.slice(0, word.length);
+  const processedGuess = Array.from(Array(word.length))
+    .map((l, idx) => guess[idx] || ".")
+    .join("");
   // Set up an accumulator so we can track multiple instances of the same letter
   let lettersInGuess: { [letter: string]: number } = {};
 
@@ -33,9 +35,9 @@ const parseGuess = (guess: string, word: string): Guess => {
   // accurately calculate where the letters are elsewhere in the word
   const lettersNotCorrect = word
     .split("")
-    .filter((wl, idx) => wl !== guess[idx]);
+    .filter((wl, idx) => wl !== processedGuess[idx]);
 
-  const letterState: LetterState[] = guess.split("").map((l, idx) => {
+  const letterState: LetterState[] = processedGuess.split("").map((l, idx) => {
     if (!(l in lettersInGuess)) {
       lettersInGuess[l] = 1;
     } else {
@@ -50,12 +52,10 @@ const parseGuess = (guess: string, word: string): Guess => {
   });
 
   return {
-    word: guess,
+    word: processedGuess,
     letters: letterState,
   };
 };
-
-const emptyGuess = Array.from(Array(11)).fill(".").join("");
 
 const App: React.FunctionComponent<IAppProps> = () => {
   // Word and Guess variables
@@ -116,9 +116,13 @@ const App: React.FunctionComponent<IAppProps> = () => {
       <div style={{ display: "flex", flexDirection: "column" }}>
         <Word {...createStarterGuess(word)} />
         {guessState.map((gs, idx) => (
-          <Word key={`${gs.word}${idx}`} {...gs} fail={!isRight && idx === 4} />
+          <Word
+            key={`${gs.word}${idx}`}
+            {...gs}
+            fail={hasFailed && idx === 4}
+          />
         ))}
-        {isOutOfTime && <Word {...parseGuess(emptyGuess, word)} fail={true} />}
+        {isOutOfTime && <Word {...parseGuess("", word)} fail={true} />}
         {hasFailed && <Word {...parseGuess(word, word)} />}
       </div>
       {isRight || hasFailed ? (
@@ -152,7 +156,7 @@ const App: React.FunctionComponent<IAppProps> = () => {
               setGuessInput(e.currentTarget.value.toLocaleLowerCase())
             }
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === "Enter" && guessInput.length) {
                 takeGuess();
               }
             }}
