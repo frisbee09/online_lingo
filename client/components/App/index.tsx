@@ -152,6 +152,7 @@ const App: React.FunctionComponent<IAppProps> = () => {
           <input
             ref={inputRef}
             value={guessInput}
+            placeholder="Guess the word"
             onChange={(e) =>
               setGuessInput(e.currentTarget.value.toLocaleLowerCase())
             }
