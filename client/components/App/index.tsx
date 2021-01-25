@@ -5,6 +5,7 @@ import { GlobalStyle } from "../../config/GlobalStyle";
 import { LetterState } from "../Words/LetterState";
 import { Guess, Word } from "../Words/Word";
 import TimerBar from "../Words/TimerBar";
+import { ConfigWrapper } from "./Config";
 
 interface IAppProps {}
 
@@ -17,7 +18,8 @@ const createStarterGuess = (word: string): Guess => ({
   })),
 });
 
-const TIME_LIMIT_IN_S = 15;
+const DEFAULT_GUESS_TIMER_IN_S = 15;
+const DEFAULT_WORD_LENGTH = 4;
 
 /**
  * Takes a guess and creates a Guess state object against the word
@@ -63,25 +65,36 @@ const App: React.FunctionComponent<IAppProps> = () => {
   const [guessState, setGuessState] = React.useState<Guess[]>([]);
   const [guessInput, setGuessInput] = React.useState<string>("");
 
+  // Game config
+  const [timeLimit, setTimelimit] = React.useState<number>(
+    DEFAULT_GUESS_TIMER_IN_S
+  );
+  const [wordLength, setWordLength] = React.useState<number>(
+    DEFAULT_WORD_LENGTH
+  );
+
   // Timer function state objects
   const [timeNow, updateTime] = React.useState<Date>(new Date());
-  const [timeLimit, setOOT] = React.useState<Date | null>(null);
+  const [timesUpAt, setOOT] = React.useState<Date | null>(null);
   const intervalId = React.useRef<number | null>(null);
 
   // UX Ref
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   // Derived state
-  const isOutOfTime = timeLimit
-    ? timeNow.getTime() >= timeLimit.getTime()
+  const isOutOfTime = timesUpAt
+    ? timeNow.getTime() >= timesUpAt.getTime()
     : false;
   const isRight =
     guessState.length &&
     guessState.slice(-1)[0].letters.every((l) => l.correct);
   const hasFailed = !isRight && (isOutOfTime || guessState.length === 5);
 
+  const gameHasntStarted = !timesUpAt;
+  const gameHasFinished = isRight || hasFailed;
+
   // Clearing up at the end of the game
-  if (isRight || isOutOfTime || hasFailed) {
+  if (gameHasFinished) {
     intervalId.current && clearTimeout(intervalId.current);
     intervalId.current = null;
   }
@@ -93,7 +106,7 @@ const App: React.FunctionComponent<IAppProps> = () => {
       parseGuess((guessOverride || guessInput).slice(0, word.length), word),
     ]);
     setGuessInput("");
-    setOOT(new Date(Date.now() + TIME_LIMIT_IN_S * 1000));
+    setOOT(new Date(Date.now() + timeLimit * 1000));
 
     intervalId.current = setInterval(() => {
       updateTime(new Date());
@@ -101,16 +114,42 @@ const App: React.FunctionComponent<IAppProps> = () => {
   };
 
   const getNewWord = async () => {
-    const newWord = await wordsApi.getNewWord(4);
+    const newWord = await wordsApi.getNewWord(wordLength);
     setWord(newWord);
   };
 
+  const renderGameConfig = () => {
+    if (gameHasntStarted || gameHasFinished) {
+      return (
+        <ConfigWrapper>
+          <hr />
+          <div>
+            <label htmlFor="timeLimit">Time Limit per Guess (seconds): </label>
+            <input
+              id="timeLimit"
+              value={timeLimit.toString()}
+              onChange={(e) => setTimelimit(Number(e.currentTarget.value))}
+            />
+          </div>
+          <div>
+            <label htmlFor="wordLength">Length of Word: </label>
+            <input
+              id="wordLength"
+              value={wordLength.toString()}
+              onChange={(e) => setWordLength(Number(e.currentTarget.value))}
+            />
+          </div>
+        </ConfigWrapper>
+      );
+    }
+  };
+
   React.useEffect(() => {
-    if (!word) {
+    if (!word || (wordLength !== 0 && word.length !== wordLength)) {
       getNewWord();
     }
     inputRef.current?.focus();
-  }, []);
+  }, [wordLength]);
   return (
     <AppWrapper>
       <div style={{ display: "flex", flexDirection: "column" }}>
@@ -125,7 +164,7 @@ const App: React.FunctionComponent<IAppProps> = () => {
         {isOutOfTime && <Word {...parseGuess("", word)} fail={true} />}
         {hasFailed && <Word {...parseGuess(word, word)} />}
       </div>
-      {isRight || hasFailed ? (
+      {gameHasFinished ? (
         <button
           type="button"
           onClick={() => {
@@ -143,11 +182,11 @@ const App: React.FunctionComponent<IAppProps> = () => {
         <>
           <TimerBar
             timeLeft={
-              timeLimit
-                ? timeLimit.getTime() - timeNow.getTime()
-                : TIME_LIMIT_IN_S * 1000
+              timesUpAt
+                ? timesUpAt.getTime() - timeNow.getTime()
+                : timeLimit * 1000
             }
-            totalTime={TIME_LIMIT_IN_S * 1000}
+            totalTime={timeLimit * 1000}
           />
           <input
             ref={inputRef}
@@ -164,6 +203,7 @@ const App: React.FunctionComponent<IAppProps> = () => {
           />
         </>
       )}
+      {renderGameConfig()}
       <GlobalStyle />
     </AppWrapper>
   );
