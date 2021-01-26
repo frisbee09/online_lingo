@@ -66,12 +66,15 @@ const App: React.FunctionComponent<IAppProps> = () => {
   const [guessInput, setGuessInput] = React.useState<string>("");
 
   // Game config
-  const [timeLimit, setTimelimit] = React.useState<number>(
-    DEFAULT_GUESS_TIMER_IN_S
+  const [timeLimitAsString, setTimelimit] = React.useState<string>(
+    DEFAULT_GUESS_TIMER_IN_S.toString()
   );
-  const [wordLength, setWordLength] = React.useState<number>(
-    DEFAULT_WORD_LENGTH
+  const timeLimit = Number(timeLimitAsString);
+
+  const [wordLengthAsString, setWordLength] = React.useState<string>(
+    DEFAULT_WORD_LENGTH.toString()
   );
+  const wordLength = Number(wordLengthAsString);
 
   // Timer function state objects
   const [timeNow, updateTime] = React.useState<Date>(new Date());
@@ -114,6 +117,7 @@ const App: React.FunctionComponent<IAppProps> = () => {
   };
 
   const getNewWord = async () => {
+    setOOT(null);
     const newWord = await wordsApi.getNewWord(wordLength);
     setWord(newWord);
   };
@@ -124,25 +128,39 @@ const App: React.FunctionComponent<IAppProps> = () => {
         <ConfigWrapper>
           <hr />
           <div>
-            <label htmlFor="timeLimit">Time Limit per Guess (seconds): </label>
+            <label htmlFor="timeLimit">Time per Guess (seconds): </label>
             <input
+              type="number"
+              pattern="0-9"
               id="timeLimit"
-              value={timeLimit.toString()}
-              onChange={(e) => setTimelimit(Number(e.currentTarget.value))}
+              value={timeLimitAsString}
+              onChange={(e) => setTimelimit(e.currentTarget.value)}
             />
           </div>
           <div>
             <label htmlFor="wordLength">Length of Word: </label>
             <input
+              type="number"
+              pattern="0-9"
               id="wordLength"
-              value={wordLength.toString()}
-              onChange={(e) => setWordLength(Number(e.currentTarget.value))}
+              value={wordLengthAsString}
+              onChange={(e) => setWordLength(e.currentTarget.value)}
             />
           </div>
         </ConfigWrapper>
       );
     }
   };
+
+  const createGuessGuide = (): Guess => ({
+    word: "",
+    letters: word.split("").map((l, idx) => ({
+      letter:
+        idx === 0 || guessState.some((g) => g.letters[idx].correct) ? l : ".",
+      correct: false,
+      elsewhere: false,
+    })),
+  });
 
   React.useEffect(() => {
     if (!word || (wordLength !== 0 && word.length !== wordLength)) {
@@ -153,7 +171,6 @@ const App: React.FunctionComponent<IAppProps> = () => {
   return (
     <AppWrapper>
       <div style={{ display: "flex", flexDirection: "column" }}>
-        <Word {...createStarterGuess(word)} />
         {guessState.map((gs, idx) => (
           <Word
             key={`${gs.word}${idx}`}
@@ -161,6 +178,9 @@ const App: React.FunctionComponent<IAppProps> = () => {
             fail={hasFailed && idx === 4}
           />
         ))}
+        {(gameHasntStarted || !gameHasFinished) && (
+          <Word {...createGuessGuide()} />
+        )}
         {isOutOfTime && <Word {...parseGuess("", word)} fail={true} />}
         {hasFailed && <Word {...parseGuess(word, word)} />}
       </div>

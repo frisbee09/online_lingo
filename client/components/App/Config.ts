@@ -8,6 +8,8 @@ export const ConfigWrapper = styled.div`
 
   > hr {
     width: 100%;
+    opacity: 0.5;
+    filter: brightness(0.75);
   }
 
   > div {
@@ -16,6 +18,8 @@ export const ConfigWrapper = styled.div`
     }
     margin-top: 10px;
     display: flex;
+
+    flex-direction: column;
     justify-content: space-between;
     align-items: center;
   }
