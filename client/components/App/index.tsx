@@ -93,17 +93,17 @@ const App: React.FunctionComponent<IAppProps> = () => {
     guessState.slice(-1)[0].letters.every((l) => l.correct);
   const hasFailed = !isRight && (isOutOfTime || guessState.length === 5);
 
-  const gameHasntStarted = !timesUpAt;
+  const gameHasntStarted = !timesUpAt && guessState.length === 0;
   const gameHasFinished = isRight || hasFailed;
 
   // Clearing up at the end of the game
   if (gameHasFinished) {
-    intervalId.current && clearTimeout(intervalId.current);
+    intervalId.current && clearInterval(intervalId.current);
     intervalId.current = null;
   }
 
   const takeGuess = (guessOverride?: string) => {
-    intervalId.current && clearTimeout(intervalId.current);
+    intervalId.current && clearInterval(intervalId.current);
     setGuessState([
       ...guessState,
       parseGuess((guessOverride || guessInput).slice(0, word.length), word),
@@ -117,10 +117,15 @@ const App: React.FunctionComponent<IAppProps> = () => {
   };
 
   const getNewWord = async () => {
-    setOOT(null);
     const newWord = await wordsApi.getNewWord(wordLength);
     setWord(newWord);
   };
+
+  React.useEffect(() => {
+    if (!word || gameHasntStarted) {
+      getNewWord();
+    }
+  }, [wordLength]);
 
   const renderGameConfig = () => {
     if (gameHasntStarted || gameHasFinished) {
@@ -162,12 +167,6 @@ const App: React.FunctionComponent<IAppProps> = () => {
     })),
   });
 
-  React.useEffect(() => {
-    if (!word || (wordLength !== 0 && word.length !== wordLength)) {
-      getNewWord();
-    }
-    inputRef.current?.focus();
-  }, [wordLength]);
   return (
     <AppWrapper>
       <div style={{ display: "flex", flexDirection: "column" }}>
