@@ -21,25 +21,29 @@ const createStarterGuess = (word: string): Guess => ({
 const DEFAULT_GUESS_TIMER_IN_S = 15;
 const DEFAULT_WORD_LENGTH = 4;
 
+export const getLettersNotCorrect = (guess: string[], word: string) =>
+  word.split("").filter((wl, idx) => wl !== guess[idx]);
+
 /**
  * Takes a guess and creates a Guess state object against the word
  * @param processedGuess
  * @param word
  */
-const parseGuess = (guess: string, word: string): Guess => {
-  const processedGuess = Array.from(Array(word.length))
-    .map((l, idx) => guess[idx] || ".")
-    .join("");
+export const parseGuess = (guess: string, word: string): Guess => {
+  const processedGuess = Array.from(Array(word.length)).map(
+    (l, idx) => guess[idx] || "."
+  );
   // Set up an accumulator so we can track multiple instances of the same letter
   let lettersInGuess: { [letter: string]: number } = {};
 
-  // Create a substring of letters that are not correct This is so that we can
-  // accurately calculate where the letters are elsewhere in the word
+  /**
+   * Letters remaining not guessed correctly
+   */
   const lettersNotCorrect = word
     .split("")
     .filter((wl, idx) => wl !== processedGuess[idx]);
 
-  const letterState: LetterState[] = processedGuess.split("").map((l, idx) => {
+  const letterState: LetterState[] = processedGuess.map((l, idx) => {
     if (!(l in lettersInGuess)) {
       lettersInGuess[l] = 1;
     } else {
@@ -47,14 +51,17 @@ const parseGuess = (guess: string, word: string): Guess => {
     }
     const correct = l === word[idx];
     const elsewhere =
+      // Not correct
       !correct &&
-      lettersNotCorrect.filter((wl) => wl === l).length >= lettersInGuess[l];
+      // Total number of this letter in the word bigger or equal to the number
+      // of times this letter has been guess thus far
+      word.split("").filter((wl) => wl == l).length >= lettersInGuess[l];
 
     return { letter: l, correct, elsewhere };
   });
 
   return {
-    word: processedGuess,
+    word: processedGuess.join(""),
     letters: letterState,
   };
 };
